@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Training FM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       CSS CUSTOM PROPERTIES
+    ============================================================ */
+    :root {
+      --bg:          #0d0d0d;
+      --bg-card:     #141414;
+      --bg-raised:   #1a1a1a;
+      --border:      rgba(255,255,255,0.07);
+      --gold:        #0073ff;
+      --gold-dim:    rgba(201,168,76,0.15);
+      --gold-bright: #0073ff;
+      --text:        #0073ff;
+      --text-muted:  #afaca5;
+      --text-mid:    #99958f;
+      --white:       #ffffff;
+      --ff-display:  'Playfair Display', Georgia, serif;
+      --ff-body:     'DM Sans', sans-serif;
+      --ff-mono:     'DM Mono', monospace;
+      --radius:      4px;
+      --transition:  0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--ff-body);
+      font-weight: 300;
+      line-height: 1.7;
+      overflow-x: hidden;
+      cursor: default;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+    ul { list-style: none; }
+
+    /* ============================================================
+       NOISE TEXTURE OVERLAY
+    ============================================================ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.45;
+    }
+
+    /* ============================================================
+       SCROLLBAR
+    ============================================================ */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+
+    /* ============================================================
+       NAV
+    ============================================================ */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 5vw;
+      background: rgba(13,13,13,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      transition: var(--transition);
+    }
+    .nav-logo {
+      font-family: var(--ff-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+    }
+    .nav-links a {
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      transition: color var(--transition);
+    }
+    .nav-links a:hover { color: var(--gold); }
+
+    /* Hamburger */
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .nav-toggle span {
+      display: block;
+      width: 22px;
+      height: 1.5px;
+      background: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    /* ============================================================
+       HERO
+    ============================================================ */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 8rem 5vw 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Decorative grid lines */
+    #hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 80px 80px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* Gold glow blob */
+    #hero::after {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+      top: -100px; right: -100px;
+      pointer-events: none;
+      animation: pulse 6s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%       { transform: scale(1.1); opacity: 0.7; }
+    }
+
+    .hero-inner {
+      max-width: 900px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-eyebrow {
+      font-family: var(--ff-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 40px; height: 1px;
+      background: var(--gold);
+    }
+
+    .hero-name {
+      font-family: var(--ff-display);
+      font-size: clamp(3rem, 9vw, 7.5rem);
+      font-weight: 900;
+      line-height: 0.92;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      margin-bottom: 1.2rem;
+    }
+    .hero-name em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .hero-role {
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--text-mid);
+      max-width: 520px;
+      margin-bottom: 3rem;
+      line-height: 1.6;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 2rem;
+      background: var(--gold);
+      color: #0d0d0d;
+      font-family: var(--ff-body);
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      border-radius: var(--radius);
+    }
+    .btn-primary:hover {
+      background: var(--gold-bright);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(201,168,76,0.3);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 2rem;
+      background: transparent;
+      color: var(--text-mid);
+      font-family: var(--ff-body);
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: var(--transition);
+      border-radius: var(--radius);
+    }
+    .btn-secondary:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      transform: translateY(-2px);
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 5vw;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: var(--ff-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      animation: float 3s ease-in-out infinite;
+    }
+    .hero-scroll::before {
+      content: '';
+      display: block;
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, transparent, var(--text-muted));
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(6px); }
+    }
+
+    /* ============================================================
+       SECTION SHARED
+    ============================================================ */
+    section {
+      padding: 7rem 5vw;
+    }
+    .section-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .section-header {
+      display: flex;
+      align-items: column;
+      gap: 40px;
+      margin-bottom: 4rem;
+    }
+    .section-label {
+      font-family: var(--ff-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      white-space: nowrap;
+    }
+    .section-title {
+      font-family: var(--ff-display);
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.1;
+    }
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ============================================================
+       OBJECTIFS
+    ============================================================ */
+    #about { 
+  background: var(--bg); 
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 50% / 50% */
+  gap: 2rem;
+  align-items: stretch;
+}
+.about-visual {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.about-gif {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.about-intro p {
+  color: var(--text-mid);
+  font-size: 1.05rem;
+  line-height: 1.85;
+  margin-bottom: 1.2rem;
+}
+
+.about-intro p strong {
+  color: #1553C7;
+}
+
+.about-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+/* --- CARDS --- */
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 1.75rem 1.5rem;
+  border-radius: var(--radius);
+  transition: var(--transition);
+
+  /* Animation flottante */
+  animation: floatRandom 6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  will-change: transform;
+}
+
+.stat-card:hover {
+  border-color: rgba(201,168,76,0.3);
+  transform: translateY(-3px) scale(1.01);
+}
+
+/* --- VARIATIONS POUR EFFET ALEATOIRE --- */
+.stat-card:nth-child(1) {
+  animation-duration: 5s;
+}
+
+.stat-card:nth-child(2) {
+  animation-duration: 7s;
+  animation-delay: 1s;
+}
+
+.stat-card:nth-child(3) {
+  animation-duration: 6.5s;
+  animation-delay: 2s;
+}
+
+.stat-card:nth-child(4) {
+  animation-duration: 8s;
+  animation-delay: 0.5s;
+}
+
+/* --- ANIMATION --- */
+@keyframes floatRandom {
+  0%   { transform: translate(0px, 0px); }
+  20%  { transform: translate(2px, -6px); }
+  40%  { transform: translate(-3px, -10px); }
+  60%  { transform: translate(3px, -5px); }
+  80%  { transform: translate(-2px, -8px); }
+  100% { transform: translate(0px, 0px); }
+}
+
+/* --- TEXTES --- */
+.stat-number {
+  font-family: var(--ff-display);
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+.about-visual {
+  margin-top: 2rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.about-gif {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius);
+  display: block;
+}
+    /* ============================================================
+       Ici, vous découvrez
+    ============================================================ */
+    #experience { background: var(--bg-card); }
+    .timeline {
+      position: relative;
+      padding-left: 2rem;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 8px; bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--gold), transparent);
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 3.5rem;
+      padding-left: 2.5rem;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -2rem;
+      top: 8px;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 0 3px var(--bg-card), 0 0 0 5px rgba(201,168,76,0.2);
+    }
+    .timeline-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .timeline-date {
+      font-family: var(--ff-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      color: var(--gold);
+      background: var(--gold-dim);
+      padding: 0.2rem 0.65rem;
+      border-radius: 2px;
+    }
+    .timeline-type {
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .timeline-title {
+      font-family: var(--ff-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 0.2rem;
+    }
+    .timeline-org {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .timeline-body {
+      color: var(--text-mid);
+      font-size: 0.92rem;
+      line-height: 1.75;
+    }
+    .timeline-body li {
+      position: relative;
+      padding-left: 1.2rem;
+      margin-bottom: 0.4rem;
+    }
+    .timeline-body li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: var(--gold);
+      font-size: 0.75rem;
+    }
+
+    /* ============================================================
+       Aller plus en détails
+    ============================================================ */
+    #projects { background: var(--bg); }
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .project-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+    }
+    .project-card:hover {
+      border-color: rgba(201,168,76,0.35);
+      transform: translateY(-5px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .project-img {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--bg-raised);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .project-img-placeholder {
+      font-family: var(--ff-display);
+      font-size: 4rem;
+      opacity: 0.12;
+      color: var(--gold);
+      user-select: none;
+    }
+    .project-img-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(201,168,76,0.04) 0%, transparent 60%);
+    }
+    .project-body {
+      padding: 1.75rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .project-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .project-tag {
+      font-family: var(--ff-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: var(--gold-dim);
+      padding: 0.25rem 0.6rem;
+      border-radius: 2px;
+    }
+    .project-title {
+      font-family: var(--ff-display);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 0.75rem;
+    }
+    .project-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      flex: 1;
+    }
+    .project-links {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+    .project-link {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: color var(--transition);
+    }
+    .project-link:hover { color: var(--gold); }
+    .project-link svg { width: 8px; height: 8px; }
+
+    /* ============================================================
+       Démonstration
+    ============================================================ */
+    #skills { background: var(--bg-card); }
+    .skills-wrapper {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 2rem;
+    }
+    .skill-group {
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      transition: var(--transition);
+    }
+    .skill-group:hover { border-color: rgba(201,168,76,0.25); }
+    .skill-group-icon {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .skill-group-title {
+      font-family: var(--ff-display);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .skill-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .skill-badge {
+      font-family: var(--ff-mono);
+      font-size: 0.72rem;
+      color: var(--text-mid);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.75rem;
+      border-radius: 2px;
+      transition: var(--transition);
+      cursor: default;
+    }
+    .skill-badge:hover {
+      color: var(--gold);
+      border-color: rgba(201,168,76,0.4);
+      background: var(--gold-dim);
+    }
+
+    /* Language flags row */
+    .languages-row {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-top: 2.5rem;
+    }
+    .lang-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+    .lang-flag { font-size: 2rem; }
+    .lang-level {
+      font-family: var(--ff-mono);
+      font-size: 0.80rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: var(--gold-dim);
+      padding: 0.15rem 0.5rem;
+      border-radius: 2px;
+    }
+
+    /* ============================================================
+       CONTACT / FOOTER
+    ============================================================ */
+    #contact {
+      background: var(--bg);
+      padding-bottom: 4rem;
+    }
+    .contact-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4rem;
+      display: flex;
+      gap: 4rem;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .contact-card::before {
+      content: '';
+      position: absolute;
+      top: -80px; right: -80px;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .contact-left { flex: 1; }
+    .contact-title {
+      font-family: var(--ff-display);
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 0.75rem;
+      line-height: 1.2;
+    }
+    .contact-sub {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      max-width: 400px;
+    }
+    .contact-right {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-width: 240px;
+    }
+    .contact-link {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-mid);
+      font-size: 0.85rem;
+      transition: var(--transition);
+    }
+    .contact-link:hover {
+      border-color: rgba(201,168,76,0.4);
+      color: var(--gold);
+      transform: translateX(4px);
+    }
+    .contact-link-icon {
+      width: 36px; height: 36px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .contact-link-icon svg { width: 15px; height: 15px; fill: var(--gold); }
+
+    .footer-bar {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--ff-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       ANIMATIONS (Intersection Observer driven)
+    ============================================================ */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .fade-up:nth-child(2) { transition-delay: 0.1s; }
+    .fade-up:nth-child(3) { transition-delay: 0.2s; }
+    .fade-up:nth-child(4) { transition-delay: 0.3s; }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 900px) {
+      .about-grid { grid-template-columns: 1fr; gap: 3rem; }
+      .contact-card { flex-direction: column; gap: 2.5rem; padding: 2.5rem; }
+      .contact-right { width: 100%; }
+    }
+    @media (max-width: 700px) {
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%; left: 0; right: 0;
+        background: rgba(13,13,13,0.97);
+        border-bottom: 1px solid var(--border);
+        padding: 1.5rem 5vw;
+        gap: 1.5rem;
+      }
+      .nav-toggle { display: flex; }
+      #hero { padding-top: 6rem; }
+      .hero-scroll { display: none; }
+      .about-stats { grid-template-columns: 1fr 1fr; }
+      .section-header { flex-wrap: wrap; }
+      .section-line { display: none; }
+      .footer-bar { flex-direction: column; gap: 0.75rem; text-align: center; }
+    }
+    @media (max-width: 480px) {
+      section { padding: 5rem 5vw; }
+      .about-stats { grid-template-columns: 1fr; }
+      .contact-card { padding: 2rem 1.5rem; }
+    }
+
+    .hero-photo-wrap {
+  position: absolute;
+  right: 5vw;
+  top: 50%;
+  transform: translateY(-50%) translateX(40px);
+  opacity: 0;
+  z-index: 1;
+  animation: heroFadeIn 1s ease forwards;
+}
+
+@keyframes heroFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.hero-photo-frame {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 16px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.hero-logo {
+  width: 160px;
+  object-fit: contain;
+}
+
+.hero-avatar {
+  width: 280px;
+  object-fit: contain;
+}
+
+@keyframes float {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-12px); }
+  100% { transform: translateY(0px); }
+}
+
+.hero-photo-frame::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0;
+  animation: frameFade 1.5s ease forwards;
+  animation-delay: 0.5s;
+}
+
+@keyframes frameFade {
+  to { opacity: 1; }
+}
+
+@media (max-width: 1000px) {
+  .hero-photo-wrap {
+    display: none;
+  }
+}
+
+
+    /* Project photo gallery */
+    .project-gallery {
+      width: auto;
+      overflow: hidden;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-raised);
+    }
+    .gallery-track {
+      display: flex;
+      transition: transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+    .gallery-slide {
+      min-width: 100%;
+      aspect-ratio: 16/9;
+      overflow: hidden;
+      position: relative;
+    }
+    .gallery-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+      filter: brightness(0.92);
+      transition: filter var(--transition);
+    }
+    .gallery-slide img:hover { filter: brightness(1); }
+    .gallery-controls {
+      position: absolute;
+      bottom: 0.75rem;
+      right: 0.75rem;
+      display: flex;
+      gap: 0.4rem;
+      z-index: 5;
+    }
+    .gallery-btn {
+      width: 28px; height: 28px;
+      background: rgba(13,13,13,0.75);
+      border: 1px solid rgba(201,168,76,0.4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--gold);
+      transition: var(--transition);
+      padding: 0;
+    }
+    .gallery-btn:hover { background: rgba(201,168,76,0.2); }
+    .gallery-btn svg { width: 10px; height: 10px; }
+    .gallery-dots {
+      position: absolute;
+      bottom: 0.75rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 5px;
+    }
+    .gallery-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .gallery-dot.active { background: var(--gold); width: 14px; border-radius: 3px; }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- ============================================================
+       NAVIGATION
+  ============================================================ -->
+  <nav id="navbar">
+    <span class="nav-logo">Feedback<br>Management</span>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#about">Objectifs</a></li>
+      <li><a href="#experience">Ici, vous découvrez</a></li>
+      <li><a href="#projects">Aller plus en détails</a></li>
+      <li><a href="#skills">Démonstration</a></li>
+      <li><a href="#contact">Envie d’essayer ?</a></li>
+    </ul>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ============================================================
+       HERO
+  ============================================================ -->
+  <section id="hero">
+    <div class="hero-inner">
+      <p class="hero-eyebrow">Formation Interactive</p>
+      <h1 class="hero-name">
+        Créer votre <br />
+        <em>diffusion web</em>
+      </h1>
+      <p class="hero-role">
+       Découvrez comment capter du feedback en temps réel, sans friction, tout en optimisant l’expérience utilisateur.
+      </p>
+      <div class="hero-ctas">
+        <a href="#contact" class="btn-primary">
+          <!-- Arrow SVG -->
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 7h12M7 1l6 6-6 6" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Get In Touch
+        </a>
+        <!-- Replace '#' with the actual link to your resume PDF if hosted -->
+      
+        </a>
+      </div>
+    </div>
+    
+<div class="hero-photo-wrap">
+  <div class="hero-photo-frame">
+    <img src="./logo.png" alt="Logo Skeepers" class="hero-logo" />
+    <img src="./Like.png" alt="Avatar Skeepers" class="hero-avatar" />
+  </div>
+</div>
+<div class="hero-scroll">Scroll to explore</div>
+</section>
+
+  <!-- ============================================================
+       OBJECTIFS
+  ============================================================ -->
+  <section id="about">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-label">01</span>
+      <h2 class="section-title">Objectifs du Live Training</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- Texte intro au-dessus de la grille -->
+    <div class="about-intro fade-up">
+<p>
+  Une <strong>diffusion web</strong> est un canal permettant d'intégrer 
+  un questionnaire dans un site internet. Elle peut être affichée sous 
+  différentes formes : <strong>bouton</strong>, <strong>barre</strong>, 
+  <strong>pop-under</strong>, <strong>pop-in</strong>, et <strong>inpage</strong>.
+</p>
+      <div class="languages-row">
+        <div class="lang-item">
+          <span class="lang-level">Si</span>
+        </div>
+        <div class="lang-item">
+          <span class="lang-level">Alors</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-grid">
+
+      <!-- COLONNE GAUCHE : image/GIF grande -->
+      <div class="about-visual fade-up">
+        <img src="Avatar p.gif" alt="Illustration diffusion web" class="about-gif" />
+      </div>
+
+      <!-- COLONNE DROITE : 4 cartes -->
+      <div class="about-stats">
+        <div class="stat-card fade-up">
+          <div class="stat-number">Implémenter</div>
+          <div class="stat-label">facilement un tag de déclenchement sur votre site</div>
+        </div>
+        <div class="stat-card fade-up">
+          <div class="stat-number">Créer et Configurer</div>
+          <div class="stat-label">vos diffusions web en quelques étapes</div>
+        </div>
+        <div class="stat-card fade-up">
+          <div class="stat-number">Lancer et piloter</div>
+          <div class="stat-label">vos campagnes via notre extension Chrome</div>
+        </div>
+        <div class="stat-card fade-up">
+          <div class="stat-number">Explorer</div>
+          <div class="stat-label">les formats : pop-in, barre, bouton latéral… et choisir le bon</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+  <!-- ============================================================
+       Ici, vous découvrez
+  ============================================================ -->
+  <section id="experience">
+    <div class="section-inner">
+      <div class="section-header">
+        <span class="section-label">02</span>
+        <h2 class="section-title">Ici, vous découvrez</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="timeline">
+
+        <!-- Action -->
+        <div class="timeline-item fade-up">
+          <div class="timeline-meta">
+            <span class="timeline-date">Créer et configurer</span>
+            <span class="timeline-type">Diffusion web</span>
+          </div>
+          <h3 class="timeline-title">Qu’est-ce qu’une diffusion web ?</h3>
+          <p class="timeline-org">Découvrez les diffusions web avec ses différents types et conditions dans la plateforme Feedback Management. Apprenez également comment configurer et lancer votre diffusion web.</p>
+        </div>
+
+           <!-- Tag -->
+        <div class="timeline-item fade-up">
+          <div class="timeline-meta">
+            <span class="timeline-date">Implémenter</span>
+            <span class="timeline-type">tag de déclenchement</span>
+          </div>
+          <h3 class="timeline-title">Intégration du tag de déclenchement</h3>
+          <p class="timeline-org">Découvrez comment installer un tag de déclenchement sur votre site web </p>
+        </div>
+
+              <!-- Formats -->
+        <div class="timeline-item fade-up">
+          <div class="timeline-meta">
+            <span class="timeline-date">Explorer</span>
+          </div>
+          <h3 class="timeline-title">Les différents types et formats de la diffusion web</h3>
+          <p class="timeline-org">Découvrez les différents formats de la diffusion site web pour adapter vos besoin et atteindre un taux de réponse satisfaisant. </p>
+        </div>
+
+        <!-- Extension Skeepers -->
+        <div class="timeline-item fade-up">
+          <div class="timeline-meta">
+            <span class="timeline-date">Lancer et piloter</span>
+            <span class="timeline-type">Extension Chrome</span>
+          </div>
+          <h3 class="timeline-title">Comment détecter et inspecter les problèmes de votre diffusion web ?  </h3>
+          <p class="timeline-org">Apprenez à tester et déboguer la diffusion web de vos enquêtes de feedback directement sur votre site et votre environnement. </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Aller plus en détails
+  ============================================================ -->
+  <section id="projects">
+    <div class="section-inner">
+      <div class="section-header">
+        <span class="section-label">03</span>
+        <h2 class="section-title">Aller plus en détails</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="projects-grid">
+
+        <!-- Project 1 -->
+        <div class="project-card fade-up">
+          <div class="project-gallery" id="proj-gallery">
+            <div class="gallery-track" id="gallery-track">
+              <div class="gallery-slide">
+                <img src="./Diffusion 1.png" alt="quand">
+              </div>
+              <div class="gallery-slide">
+                <img src="./Diffusion 2.png" alt="si">              
+              </div>
+              <div class="gallery-slide">
+               <img src="./Diffusion 3.png" alt="alors">             
+             </div>
+            </div>
+            <div class="gallery-dots" id="gallery-dots">
+              <div class="gallery-dot active" onclick="galleryGoto(0)"></div>
+              <div class="gallery-dot" onclick="galleryGoto(1)"></div>
+              <div class="gallery-dot" onclick="galleryGoto(2)"></div>
+            </div>
+            <div class="gallery-controls">
+              <button class="gallery-btn" onclick="galleryPrev()" aria-label="Previous">
+                <svg viewBox="0 0 10 10" fill="none"><path d="M6.5 2L3.5 5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="gallery-btn" onclick="galleryNext()" aria-label="Next">
+                <svg viewBox="0 0 10 10" fill="none"><path d="M3.5 2L6.5 5l-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="project-body">
+            <div class="project-tags">
+              <span class="project-tag">Déploiement</span>
+              <span class="project-tag">Ciblage</span>
+              <span class="project-tag">Affichage</span>
+            </div>
+            <h3 class="project-title">Qu'est-ce qu'une diffusion web ?</h3>
+            <p class="project-desc">
+              Une diffusion web est un canal permettant d'intégrer un questionnaire dans un site internet. Elle peut être affichée sous différentes formes : bouton, barre, pop-under, pop-in et inpage.
+            </p>
+            <div class="project-links">
+              <a href="https://help.cxr.skeepers.com/hc/fr/articles/6421548152220"target="_blank">
+                <u>Consulter l'article sur la création d'une diffusion sur un site web</u>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project 2: Action-->
+        <div class="project-card fade-up">
+          <div class="project-img" style="background: linear-gradient(135deg, #1a1a1a 0%, #141414 100%); display:flex; align-items:center; justify-content:center;">
+            <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:0.6rem;">
+              <div style="display:flex;gap:10px;align-items:center;">
+                <div style="width:36px;height:36px;border:1.5px solid hwb(0 100% 0% / 0.445);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1l1.8 3.6L14 5.3l-3 2.9.7 4.1L8 10.4l-3.7 1.9.7-4.1-3-2.9 4.2-.7L8 1z" stroke="#c9a84c" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                </div>
+                <div style="width:36px;height:36px;border:1.5px solid rgba(252, 252, 252, 0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="#c9a84c" stroke-width="1.2"/><path d="M8 5v3l2 1" stroke="#c9a84c" stroke-width="1.2" stroke-linecap="round"/></svg>
+                </div>
+                <div style="width:36px;height:36px;border:1.5px solid rgba(238, 239, 240, 0.26);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 11l4-4 3 3 5-6" stroke="#c9a84c" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </div>
+              <span style="font-family:var(--ff-mono);font-size:0.58rem;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;">Créer une action</span>
+            </div>
+            <div class="project-img-overlay"></div>
+          </div>
+          <div class="project-body">
+            <div class="project-tags">
+              <span class="project-tag">Déclenchement</span>
+              <span class="project-tag">Comportement</span>
+              <span class="project-tag">Intégration</span>
+            </div>
+            <h3 class="project-title">Qu'est-ce qu'un tag de déclenchement ?</h3>
+            <p class="project-desc">
+             Le tag de déclenchement est un script JavaScript à implanter pour afficher correctement vos questionnaires (site web, in-page, bouton) selon les règles configurées. Il déclenche l’affichage aux bons moments et collecte des infos sur le visiteur (pages vues, durée, etc.).
+            </p>
+             <div class="project-links">
+              <a href="https://help.cxr.skeepers.com/hc/fr/articles/6421512949404"target="_blank">
+                <u>Consulter l'article sur le tag de déclenchement</u>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project 3: Condition d'affichage -->
+        <div class="project-card fade-up">
+          <div class="project-img" style="background: linear-gradient(135deg, #1a1a1a 0%, #141414 100%); display:flex; align-items:center; justify-content:center;">
+            <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+              <div style="display:flex;align-items:flex-end;gap:4px;height:44px;">
+                <div style="width:8px;background:rgba(201,168,76,0.3);border-radius:2px 2px 0 0;height:28px;"></div>
+                <div style="width:8px;background:rgba(201,168,76,0.5);border-radius:2px 2px 0 0;height:38px;"></div>
+                <div style="width:8px;background:rgba(201,168,76,0.7);border-radius:2px 2px 0 0;height:22px;"></div>
+                <div style="width:8px;background:var(--gold);border-radius:2px 2px 0 0;height:44px;"></div>
+                <div style="width:8px;background:rgba(201,168,76,0.6);border-radius:2px 2px 0 0;height:32px;"></div>
+                <div style="width:8px;background:rgba(201,168,76,0.4);border-radius:2px 2px 0 0;height:18px;"></div>
+                <div style="width:8px;background:rgba(201,168,76,0.55);border-radius:2px 2px 0 0;height:35px;"></div>
+              </div>
+              <span style="font-family:var(--ff-mono);font-size:0.58rem;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;">Skeepers Inspector</span>
+            </div>
+            <div class="project-img-overlay"></div>
+          </div>
+          <div class="project-body">
+            <div class="project-tags">
+              <span class="project-tag">Tester</span>
+              <span class="project-tag">Vérifier</span>
+              <span class="project-tag">Corriger</span>
+            </div>
+            <h3 class="project-title">Qu'est-ce que l'extension Skeepers Inspector ?</h3>
+            <p class="project-desc">
+             Skeepers Inspector est une extension de navigateur conçue pour les clients Skeepers afin de configurer, tester et déboguer la diffusion web de vos enquêtes de feedback directement sur votre site et votre environnement. Elle vous aide à valider votre configuration et à garantir la meilleure expérience possible pour vos utilisateurs, tout en maximisant les taux de réponse aux enquêtes.
+            </p>
+            <div class="project-links">
+              <a href="https://help.cxr.skeepers.com/hc/fr/articles/24548960261788"target="_blank">
+                <u>Consulter l'article sur l'extension Skeepers Inspector</u>
+              </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Démonstration
+  ============================================================ -->
+  <section id="skills">
+    <div class="section-inner">
+      <div class="section-header">
+        <span class="section-label">04</span>
+        <h2 class="section-title">Démonstration</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="project-card fade-up">
+  <div class="project-gallery" id="proj-gallery">
+    <div class="gallery-track" id="gallery-track">
+      <div class="gallery-slide">
+        <img src="./diffusion_web_questionnaire.svg" alt="ltscenario">
+      </div>
+    </div> <!-- fermeture manquante corrigée -->
+
+    <div class="gallery-dots" id="gallery-dots">
+      <div class="gallery-dot active" onclick="galleryGoto(0)"></div>
+      <div class="gallery-dot" onclick="galleryGoto(1)"></div>
+    </div>
+    </div>
+  </div>
+
+  <div class="project-body">
+    <div class="project-tags">
+      <span class="project-tag">Déploiement</span>
+      <span class="project-tag">Ciblage</span>
+      <span class="project-tag">Affichage</span>
+    </div>
+
+    <h3 class="project-title">Configurer une diffusion web</h3>
+
+<div class="steps-container" style="color: #ffffff;">
+  
+  <ol class="steps-list" style="color: #ffffff;">
+    <li>Dans le menu latéral, cliquez sur <strong>"Diffusions"</strong>.</li>
+    <li>Vous trouverez ici toutes vos précédentes diffusions. Pour en créer une nouvelle, cliquez sur le bouton <img src="./créer.png" alt="créer" style="height: 18px; width: auto; vertical-align: middle;"></li>
+    <li>Choisissez entre <strong>diffusion classique</strong> et <strong>diffusion conversationnelle</strong>.</li>
+    <li>Sélectionnez ensuite le type de diffusion <strong>"Site Web"</strong>ainsi que la campagne à déployer.</li>
+    <li>Associez-la à une campagne puis donnez-lui un nom.</li>
+  </ol>
+
+  <div class="steps-callout" style="color: #ffffff;">
+ </p>
+    <strong>À retenir :</strong><br>
+    Un scénario se paramètre toujours en suivant l'ordre 
+    <strong>Quand → Si → Alors</strong>.
+  </div>
+</div>
+
+    <div class="project-links">
+  <a href="https://help.cxr.skeepers.com/hc/fr/articles/6421548152220"target="_blank">
+                <u>Consulter l'article sur la création d'une diffusion sur un site web</u>
+              </a>
+            </div>
+    </div>
+  </div>
+</div>
+
+     <div class="project-card fade-up">
+  <div class="project-gallery" id="proj-gallery">
+    <div class="gallery-track" id="gallery-track">
+      <div class="gallery-slide">
+        <img src="./tag_declenchement_skeepers.svg" alt="ltaction">
+      </div>
+    </div> <!-- fermeture manquante corrigée -->
+
+    <div class="gallery-dots" id="gallery-dots">
+      <div class="gallery-dot active" onclick="galleryGoto(0)"></div>
+      <div class="gallery-dot" onclick="galleryGoto(1)"></div>
+    </div>
+    </div>
+  </div>
+
+  <div class="project-body">
+    <div class="project-tags">
+      <span class="project-tag">Déclenchement</span>
+      <span class="project-tag">Comportement</span>
+      <span class="project-tag">Intégration</span>
+    </div>
+
+    <h3 class="project-title">Implémenter un tag de déclenchement</h3>
+
+<div class="steps-container" style="color: #ffffff;">
+  
+  <ol class="steps-list" style="color: #ffffff;">
+    <li>Pour récupérer le tag Dans le menu latéral, allez dans <strong>Paramètres</strong> → <strong>Diffusions</strong> → <strong>Tag de déclenchement</strong> pour copier votre tag JavaScript.</li>
+    <li>Intégrez le tag sur votre site en collant le code juste avant la balise <strong>"/body>"</strong> sur toutes les pages de votre site (MPA), ou sur la page principale uniquement (SPA).</li>
+    <li>Remplacez les valeurs <strong>undefined</strong> dans le tag par les variables de votre site ou dataLayer (infos visiteur, pages visitées, langue…).</li>
+    <li>Une fois intégré, le tag charge automatiquement les règles de déclenchement et affiche les questionnaires selon les conditions définies dans vos diffusions.</li>
+  </ol>
+
+  </div>
+</div>
+
+    <div class="project-links">
+              <a href="https://help.cxr.skeepers.com/hc/fr/articles/6421512949404"target="_blank">
+                <u>Consulter l'article sur le tag de déclenchement</u>
+              </a>
+    </div>
+  </div>
+</div>
+<div style="margin-bottom: 3rem;"></div>
+
+</p>
+      <div class="project-card fade-up">
+  <div class="project-gallery" id="proj-gallery">
+    <div class="gallery-track" id="gallery-track">
+      <div class="gallery-slide">
+        <img src="./extension-gif.gif" alt="ltcondition">
+      </div>
+    </div> <!-- fermeture manquante corrigée -->
+
+    <div class="gallery-dots" id="gallery-dots">
+      <div class="gallery-dot active" onclick="galleryGoto(0)"></div>
+      <div class="gallery-dot" onclick="galleryGoto(1)"></div>
+    </div>
+
+    </div>
+  </div>
+
+  <div class="project-body">
+    <div class="project-tags">
+      <span class="project-tag">Tester</span>
+      <span class="project-tag">Vérifier</span>
+      <span class="project-tag">Corriger</span>
+    </div>
+
+    <h3 class="project-title">Configurer l'extension Skeepers Inspector</h3>
+
+<div class="steps-container" style="color: #ffffff;">
+  
+  <ol class="steps-list" style="color: #ffffff;">
+    <li>Téléchargez et installer Skeepers Inspector sur le Chrome Web Store..</li>
+    <li>Vérifiez instantanément si le tag Skeepers est présent et chargé sur la page.</li>
+    <li>Consultez les attributs, l'URL, l'historique de pages et les interactions.</li>
+    <li>Repérez les causes d'affichage manquant (consentement, ciblage, tag absent…).</li>
+    <li>Accédez directement à la documentation depuis l'extension.</li>
+  </ol>
+  </div>
+</div>
+
+    <div class="project-links">
+              <a href="https://help.cxr.skeepers.com/hc/fr/articles/24548960261788"target="_blank">
+                <u>Consulter l'article sur l'extension Skeepers Inspector</u>
+              </a>
+    </div>
+  </div>
+</div>
+  </section>
+
+ <!-- ============================================================
+     RESSOURCES / ENVIE D'ESSAYER
+============================================================ -->
+<section id="contact">
+  <div class="section-inner">
+    <div class="section-header">
+      <span class="section-label">05</span>
+      <h2 class="section-title">Envie d’essayer ?</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="contact-card fade-up">
+      <div class="contact-left">
+        <h3 class="contact-title">Passez à l’action 🚀</h3>
+        <p class="contact-sub">
+          Retrouvez toutes les ressources pour prendre en main la plateforme,
+          approfondir vos connaissances et appliquer les bonnes pratiques.
+        </p>
+
+        <!-- Bouton replay -->
+        <a href="https://www.loom.com/share/3b3258af1145422b9484d0e8c2a68071"
+           target="_blank"
+           class="btn-primary">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 4l12 6-12 6V4z" fill="#0d0d0d"/>
+          </svg>
+          Regarder le replay
+        </a>
+      </div>
+
+      <div class="contact-right">
+
+        <!-- Help Center -->
+        <a href="https://help.cxr.skeepers.com/hc/fr"
+           target="_blank"
+           class="contact-link">
+          <span class="contact-link-icon">
+            <!-- Icône aide -->
+            <svg viewBox="0 0 20 20">
+              <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 12h-1v-1h2v1h-1zm1.07-3.75l-.9.92A1.5 1.5 0 009 12h1v-.25c0-.41.17-.79.44-1.06l1.24-1.26A2 2 0 0010 5a2 2 0 00-2 2h1a1 1 0 112 0c0 .28-.11.53-.29.71z"/>
+            </svg>
+          </span>
+          Centre d’aide
+        </a>
+
+        <!-- Plateforme -->
+        <a href="https://room.cxr.skeepers.io/backend/home/"
+           target="_blank"
+           class="contact-link">
+          <span class="contact-link-icon">
+            <!-- Icône dashboard -->
+            <svg viewBox="0 0 20 20">
+              <path d="M3 3h6v6H3V3zm8 0h6v4h-6V3zM3 11h4v6H3v-6zm6 2h8v4H9v-4z"/>
+            </svg>
+          </span>
+          Accéder à la plateforme
+        </a>
+
+        <!-- Bonnes pratiques -->
+        <a href="https://help.cxr.skeepers.com/hc/fr/categories/22673065550236-BONNES-PRATIQUES"
+           target="_blank"
+           class="contact-link">
+          <span class="contact-link-icon">
+            <!-- Icône checklist -->
+            <svg viewBox="0 0 20 20">
+              <path d="M7 9l2 2 4-4-1.5-1.5L9 8 8.5 7.5 7 9zm-2-6h10v2H5V3zm0 4h10v2H5V7zm0 4h6v2H5v-2z"/>
+            </svg>
+          </span>
+          Bonnes pratiques
+        </a>
+
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <span>© 2026 Skeepers — All rights reserved</span>
+    </div>
+  </div>
+</section>
+
+  <!-- ============================================================
+       JAVASCRIPT
+  ============================================================ -->
+  <script>
+    // ----- Nav mobile toggle -----
+    const navToggle = document.getElementById('navToggle');
+    const navLinks  = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('open');
+    });
+    // Close menu on link click
+    navLinks.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => navLinks.classList.remove('open'));
+    });
+
+    // ----- Scroll-driven fade-up animations -----
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+    // ----- Active nav link highlight on scroll -----
+    const sections = document.querySelectorAll('section[id]');
+    const navAnchors = document.querySelectorAll('.nav-links a');
+
+    const scrollSpy = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navAnchors.forEach(a => {
+            a.style.color = a.getAttribute('href') === '#' + entry.target.id
+              ? 'var(--gold)'
+              : '';
+          });
+        }
+      });
+    }, { rootMargin: '-40% 0px -50% 0px' });
+
+    sections.forEach(s => scrollSpy.observe(s));
+  
+  // ----- Project photo gallery -----
+  let galleryIdx = 0;
+  const galleryTotal = 3;
+
+  function galleryGoto(n) {
+    galleryIdx = n;
+    document.getElementById('gallery-track').style.transform = `translateX(-${n * 100}%)`;
+    document.querySelectorAll('.gallery-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === n);
+    });
+  }
+  function galleryNext() { galleryGoto((galleryIdx + 1) % galleryTotal); }
+  function galleryPrev() { galleryGoto((galleryIdx - 1 + galleryTotal) % galleryTotal); }
+
+  // Auto-advance every 4 seconds
+  setInterval(galleryNext, 4000);
+
+</script>
+
+</body>
+</html>
